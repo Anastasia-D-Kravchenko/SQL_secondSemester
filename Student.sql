@@ -30,6 +30,7 @@ INSERT INTO Subject (IdSubject, Name, Code) VALUES (1, 'Database Systems', 'CS30
 INSERT INTO Subject (IdSubject, Name, Code) VALUES (2, 'Calculus I', 'MA101');
 INSERT INTO Subject (IdSubject, Name, Code) VALUES (3, 'SBD', 'CS101');
 INSERT INTO Subject (IdSubject, Name, Code) VALUES (4, 'SBD', 'CS101');
+INSERT INTO Subject (IdSubject, Name, Code) VALUES (8, 'SBD', 'CS102');
 INSERT INTO Subject (IdSubject, Name, Code) VALUES (5, 'AUG', 'CS101');
 UPDATE Subject SET Name = 'SBD' WHERE IdSubject = 3;
 INSERT INTO Subject (IdSubject, Name, Code) VALUES (6, 'Physical education', 'CS101');
@@ -68,10 +69,10 @@ from Student s
 join Grade g on s.IndexNumber = g.IndexNumber
 group by s.FirstName, s.LastName;
 -- 4. Find repeating subject codes (names and number of occurrences).
-select s1.Code, count(s1.Code)
+select s1.Name, count(s1.Code)
 from Subject s1
--- join SUBJECT s2 on s1.IDSUBJECT = s2.IDSUBJECT
-group by s1.Code;
+group by s1.Name, s1.Code
+having count(*) > 1;
 -- 5. Find a student (name, surname, index number, average grade) with the highest average on
 -- the third year.
 select s.FirstName, s.LastName, s.IndexNumber, avg(g.Grade)
@@ -99,7 +100,7 @@ join Grade G on s.IndexNumber = G.IndexNumber
 having avg(g.Grade) >= (select avg(Grade) from Grade join Student on Student.IndexNumber=Grade.IndexNumber where Year = s.Year)
 group by s.FirstName, s.Year;
 -- 9. Find a student who has only one grade for the subject named "Physical education".
-select s.FirstName, count(G.Grade)
+select s.FirstName
 from Student s
     join Grade G on s.IndexNumber = G.IndexNumber
     join Subject S2 on G.IdSubject = S2.IdSubject
@@ -110,8 +111,6 @@ group by s.IndexNumber, s.FirstName;
 -- education" but do not have grades given for the subject with code "PPJ".
 select distinct s.FirstName, s.LastName
 from Student s
-    join Grade g on s.IndexNumber = g.IndexNumber
-    join Subject st on st.IdSubject = g.IdSubject
 where s.Year = 1 and
       exists(select 1 from Grade g
           join Subject st2 on st2.IdSubject = g.IdSubject

@@ -301,15 +301,13 @@ with GroupedVisits as(
         from Appointment
             join Doctor d on d.IdDoctor = Appointment.Doctor_IdDoctor
             join Specialization S on d.IdSpecialization = S.IdSpecialization
-        group by s.Name, d.IdDoctor),
-    MaxVisit as(
-        select Name, max(Count) as MaxCount
-        from GroupedVisits
-        group by Name
-    ) select  gv.Name AS "Specialization", gv.Count, d.FirstName AS "DoctorName", d.LastName AS "DoctorSurname"
+        group by s.Name, d.IdDoctor)
+select  gv.Name AS "Specialization", gv.Count, d.FirstName AS "DoctorName", d.LastName AS "DoctorSurname"
 from GroupedVisits gv
         join Doctor d on d.IdDoctor = gv.IdDoctor
-        join MaxVisit mx on gv.Name = mx.Name and gv.Count = mx.MaxCount;
+where (gv.Name, gv.Count) in (select Name, max(Count) as MaxCount
+                              from GroupedVisits
+                              group by Name);
 -- 4. Find a patient who had no appointment for a visit in 1983 (but may have had in other years).
 --    (Headings: "PatientName", "PatientSurname".)
 select distinct p.FirstName as "PatientName", p.LastName as "PatientSurname"
@@ -740,3 +738,211 @@ group by p.Name;
 
 -- Task 10: Find all customers who spent more than $50 in our store. Print a customer's name + the value of all his purchases.
 -- Expected result: Customer Name, Total Purchase Value
+
+
+
+
+
+
+
+
+
+-- Create Table: T_Dog
+CREATE TABLE T_Dog (
+                       IdDog NUMBER PRIMARY KEY,
+                       Name VARCHAR2(50),
+                       Breed VARCHAR2(50),
+                       DateOfBirth DATE
+);
+
+-- Create Table: T_Instructor
+CREATE TABLE T_Instructor (
+                              IdInstructor NUMBER PRIMARY KEY,
+                              Name VARCHAR2(100)
+);
+
+-- Create Table: T_Class
+CREATE TABLE T_Class (
+                         IdClass NUMBER PRIMARY KEY,
+                         ClassDate DATE,
+                         MaxSeats NUMBER(3),
+                         Price NUMBER(7,2), -- Price of the class
+                         InstructorId NUMBER,
+                         FOREIGN KEY (InstructorId) REFERENCES T_Instructor(IdInstructor)
+);
+
+-- Create Table: T_Customer
+CREATE TABLE T_Customer (
+                            IdCustomer NUMBER PRIMARY KEY,
+                            Name VARCHAR2(50),
+                            Surname VARCHAR2(50)
+);
+
+-- Create Table: T_Ticket
+-- This table represents a customer purchasing a ticket for a specific dog to a specific class.
+CREATE TABLE T_Ticket (
+                          IdTicket NUMBER PRIMARY KEY,
+                          CustomerId NUMBER,
+                          ClassId NUMBER,
+                          DogId NUMBER,
+                          PurchaseDate DATE,
+                          FOREIGN KEY (CustomerId) REFERENCES T_Customer(IdCustomer),
+                          FOREIGN KEY (ClassId) REFERENCES T_Class(IdClass),
+                          FOREIGN KEY (DogId) REFERENCES T_Dog(IdDog)
+);
+
+-- Insert Data: T_Dog
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (1, 'Buddy', 'Golden Retriever', TO_DATE('2023-05-10', 'YYYY-MM-DD'));
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (2, 'Lucy', 'Labrador', TO_DATE('2023-01-20', 'YYYY-MM-DD'));
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (3, 'Max', 'German Shepherd', TO_DATE('2022-11-01', 'YYYY-MM-DD'));
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (4, 'Daisy', 'Poodle', TO_DATE('2024-02-15', 'YYYY-MM-DD')); -- Youngest dog born in 2024
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (5, 'Charlie', 'Beagle', TO_DATE('2024-01-05', 'YYYY-MM-DD')); -- Another 2024 dog
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (6, 'Bella', 'Bulldog', TO_DATE('2023-03-01', 'YYYY-MM-DD'));
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (7, 'Rocky', 'Boxer', TO_DATE('2022-07-07', 'YYYY-MM-DD'));
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (8, 'Leo', 'Dachshund', TO_DATE('2021-09-12', 'YYYY-MM-DD')); -- Oldest dog for top 3
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (9, 'Milo', 'Corgi', TO_DATE('2021-03-25', 'YYYY-MM-DD')); -- 2nd oldest
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (10, 'Zoe', 'Shih Tzu', TO_DATE('2020-06-30', 'YYYY-MM-DD')); -- 3rd oldest
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (11, 'Sparky', 'Terrier', TO_DATE('2023-08-01', 'YYYY-MM-DD')); -- Dog not in any class
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (12, 'Fido', 'Pug', TO_DATE('2023-02-01', 'YYYY-MM-DD')); -- Dog with 5-letter name, for task 10
+INSERT INTO T_Dog (IdDog, Name, Breed, DateOfBirth) VALUES (13, 'Bingo', 'Poodle', TO_DATE('2023-04-01', 'YYYY-MM-DD')); -- Dog with 5-letter name, for task 10
+
+-- Insert Data: T_Instructor
+INSERT INTO T_Instructor (IdInstructor, Name) VALUES (101, 'Alice Wonderland');
+INSERT INTO T_Instructor (IdInstructor, Name) VALUES (102, 'Bob The Builder');
+INSERT INTO T_Instructor (IdInstructor, Name) VALUES (103, 'Charlie Chaplin');
+
+-- Insert Data: T_Class
+-- Classes for various months and prices
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (1, TO_DATE('2024-06-01', 'YYYY-MM-DD'), 10, 50.00, 101); -- June class
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (2, TO_DATE('2024-02-10', 'YYYY-MM-DD'), 8, 45.00, 101); -- February class
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (3, TO_DATE('2024-06-15', 'YYYY-MM-DD'), 12, 55.00, 102); -- June class
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (4, TO_DATE('2024-02-20', 'YYYY-MM-DD'), 7, 60.00, 102); -- February class (most expensive for Bob)
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (5, TO_DATE('2024-03-01', 'YYYY-MM-DD'), 15, 40.00, 103);
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (6, TO_DATE('2024-03-05', 'YYYY-MM-DD'), 10, 65.00, 101); -- Most expensive for Alice
+INSERT INTO T_Class (IdClass, ClassDate, MaxSeats, Price, InstructorId) VALUES (7, TO_DATE('2024-04-01', 'YYYY-MM-DD'), 5, 70.00, 103); -- Most expensive for Charlie
+
+-- Insert Data: T_Customer
+INSERT INTO T_Customer (IdCustomer, Name, Surname) VALUES (1, 'Customer', 'One');
+INSERT INTO T_Customer (IdCustomer, Name, Surname) VALUES (2, 'Customer', 'Two');
+INSERT INTO T_Customer (IdCustomer, Name, Surname) VALUES (3, 'Customer', 'Three');
+INSERT INTO T_Customer (IdCustomer, Name, Surname) VALUES (4, 'Customer', 'Four'); -- Customer for most tickets
+
+-- Insert Data: T_Ticket
+-- For Task 1 (Dog participation dates)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (1, 1, 1, 1, TO_DATE('2024-05-20', 'YYYY-MM-DD')); -- Buddy in Class 1
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (2, 1, 2, 1, TO_DATE('2024-01-30', 'YYYY-MM-DD')); -- Buddy in Class 2
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (3, 2, 1, 2, TO_DATE('2024-05-25', 'YYYY-MM-DD')); -- Lucy in Class 1
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (4, 3, 3, 3, TO_DATE('2024-06-01', 'YYYY-MM-DD')); -- Max in Class 3
+
+-- For Task 7 (Max Seats check)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (5, 1, 1, 6, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (6, 2, 1, 7, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (7, 3, 1, 8, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (8, 4, 1, 9, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (9, 1, 1, 10, TO_DATE('2024-05-20', 'YYYY-MM-DD')); -- Class 1 has 10 seats, 6 tickets so far
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (10, 2, 1, 2, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (11, 3, 1, 3, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (12, 4, 1, 4, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (13, 1, 1, 5, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (14, 2, 1, 6, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+
+-- For Task 8 (Dogs in June and Feb classes)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (15, 1, 1, 7, TO_DATE('2024-05-20', 'YYYY-MM-DD')); -- Rocky in June class
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (16, 1, 2, 7, TO_DATE('2024-01-30', 'YYYY-MM-DD')); -- Rocky in Feb class
+
+-- For Task 9 (Customer with most tickets) - Customer Four (Id:4)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (17, 4, 1, 1, TO_DATE('2024-05-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (18, 4, 2, 2, TO_DATE('2024-01-30', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (19, 4, 3, 3, TO_DATE('2024-06-01', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (20, 4, 4, 4, TO_DATE('2024-02-10', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (21, 4, 5, 5, TO_DATE('2024-02-20', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (22, 4, 6, 6, TO_DATE('2024-03-01', 'YYYY-MM-DD'));
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (23, 4, 7, 7, TO_DATE('2024-04-01', 'YYYY-MM-DD'));
+
+-- For Task 10 (Dog participation count, 5-letter names)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (24, 1, 1, 12, TO_DATE('2024-05-20', 'YYYY-MM-DD')); -- Fido (1 class)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (25, 1, 2, 13, TO_DATE('2024-01-30', 'YYYY-MM-DD')); -- Bingo (1 class)
+INSERT INTO T_Ticket (IdTicket, CustomerId, ClassId, DogId, PurchaseDate) VALUES (26, 1, 3, 13, TO_DATE('2024-06-01', 'YYYY-MM-DD')); -- Bingo (2 classes)
+
+
+-- 1. For each dog, write down its name, the name of the breed, and all the dates of the classes in which it participated.
+
+-- 2. Show dogs that have not participated in any classes. List their name and breed name.
+
+-- 3. For each instructor, display the date and maximum number of seats for their most expensive class.
+SELECT
+    i.Name AS InstructorName,
+    c.ClassDate,
+    c.MaxSeats
+FROM
+    T_Instructor i
+        JOIN
+    T_Class c ON i.IdInstructor = c.InstructorId
+WHERE c.Price in (
+        SELECT
+            MAX(Price)
+        FROM
+            T_Class
+        GROUP BY
+            InstructorId
+    );
+-- 4. Show all dogs that are older than the youngest dog born in 2024. Sort them by name in ascending order.
+
+-- 5. In one column, display the name and breed name of the dog. In the other column, display how old each dog is (in years). Call the second column 'Age'.
+SELECT
+    d.Name || ' (' || d.Breed || ')' AS "Dog Info",
+    round(months_between(SYSDATE, d.DateOfBirth) / 12, 2) AS "Age"
+FROM
+    T_Dog d;
+-- 6. Without using the ORDER BY instruction, show the top 3 oldest dogs.
+SELECT
+    Name,
+    Breed,
+    DateOfBirth
+FROM (
+         SELECT
+             Name,
+             Breed,
+             DateOfBirth
+         FROM
+             T_Dog
+     )
+fetch first 3 rows only;
+-- 7. Make sure that the number of purchased tickets does not exceed the maximum seats for each class.
+SELECT
+    c.IdClass,
+    c.ClassDate,
+    c.MaxSeats,
+    COUNT(t.IdTicket) AS PurchasedTickets
+FROM
+    T_Class c
+        join
+    T_Ticket t ON c.IdClass = t.ClassId
+GROUP BY
+    c.IdClass, c.ClassDate, c.MaxSeats
+HAVING
+    COUNT(t.IdTicket) > c.MaxSeats;
+-- 8. Show dogs that participated in the classes held both in June and in February.
+SELECT
+    d.Name AS DogName,
+    d.Breed
+FROM
+    T_Dog d
+WHERE
+    EXISTS (
+        SELECT 1
+        FROM T_Ticket t
+                 JOIN T_Class c ON t.ClassId = c.IdClass
+        WHERE t.DogId = d.IdDog
+          AND TO_CHAR(c.ClassDate, 'MM') = '06' -- June
+    )
+  AND EXISTS (
+    SELECT 1
+    FROM T_Ticket t
+             JOIN T_Class c ON t.ClassId = c.IdClass
+    WHERE t.DogId = d.IdDog
+      AND TO_CHAR(c.ClassDate, 'MM') = '02' -- February
+);
+-- 9. Show the name of the customer who collectively bought the most tickets for the class (can be more than 1).
+
+-- 10. For each dog, show how many classes it has participated in. Exclude those dogs whose name has 5 letters and have participated in less than 2 classes.
